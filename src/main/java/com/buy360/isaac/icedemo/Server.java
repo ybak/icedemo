@@ -1,6 +1,7 @@
 package com.buy360.isaac.icedemo;
 
-import Ice.Identity;
+import java.util.Arrays;
+
 
 public class Server extends Ice.Application {
 	public int run(String[] args) {
@@ -9,16 +10,18 @@ public class Server extends Ice.Application {
 			return 1;
 		}
 
-		Ice.ObjectAdapter adapter = communicator()
-				.createObjectAdapterWithEndpoints("Hello",
-						"default -p 10000");
-		adapter.add(new HelloI("Hello"), new Identity("Hello", null));
+		Ice.ObjectAdapter adapter = communicator().createObjectAdapter("Hello");
+		Ice.Properties properties = communicator().getProperties();
+		Ice.Identity id = communicator().stringToIdentity(
+				properties.getProperty("Identity"));
+		adapter.add(new HelloI(properties.getProperty("Ice.ProgramName")), id);
 		adapter.activate();
 		communicator().waitForShutdown();
 		return 0;
 	}
 
 	static public void main(String[] args) {
+		System.out.println(Arrays.toString(args));
 		Server app = new Server();
 		int status = app.main("Server", args);
 		System.exit(status);

@@ -45,6 +45,8 @@
             <configuration>
               <tasks>
                 <mkdir dir="target/generated-sources" />
+                <mkdir dir="target/db/node" />
+                <mkdir dir="target/db/registry" />
                 <exec executable="slice2java">
                   <arg value="--output-dir" />
                   <arg value="target/generated-sources" />
@@ -57,51 +59,33 @@
               <goal>run</goal>
             </goals>
           </execution>
-          <execution>
-            <id>run_registry</id>
-            <phase>test</phase>
-            <goals>
-              <goal>run</goal>
-            </goals>
-            <configuration>
-              <tasks>
-                <mkdir dir="target/db/registry" />
-                <echo message="running icegridnode config.grid" />
-                <exec executable="icegridnode">
-                  <arg value="--Ice.Config=./src/main/resources/config.grid" />
-                </exec>
-              </tasks>
-            </configuration>
-          </execution>
         </executions>
       </plugin>
     </plugins>
   </build>
   <profiles>
     <profile>
-      <id>node1</id>
+      <id>client</id>
       <build>
         <plugins>
           <plugin>
-            <artifactId>maven-antrun-plugin</artifactId>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>exec-maven-plugin</artifactId>
             <executions>
               <execution>
-                <id>run_node1</id>
-                <phase>test</phase>
                 <goals>
-                  <goal>run</goal>
+                  <goal>exec</goal>
                 </goals>
-                <configuration>
-                  <tasks>
-                    <mkdir dir="target/db/registry" />
-                    <echo message="running icegridnode config.grid" />
-                    <exec executable="icegridnode">
-                      <arg value="--Ice.Config=./src/main/resources/config.grid" />
-                    </exec>
-                  </tasks>
-                </configuration>
               </execution>
             </executions>
+            <configuration>
+              <executable>java</executable>
+              <arguments>
+                <argument>-classpath</argument>
+                <classpath />
+                <argument>com.buy360.isaac.icedemo.Client</argument>
+              </arguments>
+            </configuration>
           </plugin>
         </plugins>
       </build>

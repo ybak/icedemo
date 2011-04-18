@@ -7,8 +7,7 @@
   <application name="Simple">
 
     <node name="node1">
-      <server id="SimpleServer" exe="java" activation="on-demand">
-        <option>Server</option>
+      <server id="SimpleServer" exe="runServer.bat" activation="on-demand">
         <adapter name="Hello" endpoints="tcp">
           <object identity="Hello" type="::Demo::Hello" property="Identity" />
         </adapter>

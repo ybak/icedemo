@@ -1,6 +1,7 @@
 package com.buy360.isaac.icedemo;
 
-import Demo.*;
+import Demo.HelloPrx;
+import Demo.HelloPrxHelper;
 
 public class Client extends Ice.Application {
 	class ShutdownHook extends Thread {
@@ -36,10 +37,19 @@ public class Client extends Ice.Application {
 		// identity. If it's not registered with the registry, we
 		// search for an object with the ::Demo::Hello type.
 		//
-		HelloPrx hello = HelloPrxHelper.checkedCast(communicator()
-				.stringToProxy("Hello:default -p 10000"));
+		HelloPrx hello = null;
+		try {
+			hello = HelloPrxHelper.checkedCast(communicator().stringToProxy(
+					"hello"));
+		} catch (Ice.NotRegisteredException ex) {
+			IceGrid.QueryPrx query = IceGrid.QueryPrxHelper
+					.checkedCast(communicator().stringToProxy(
+							"DemoIceGrid/Query"));
+			hello = HelloPrxHelper.checkedCast(query
+					.findObjectByType("::Demo::Hello"));
+		}
 		if (hello == null) {
-			System.err.println("couldn't find a '::Demo::Hello' object");
+			System.err.println("couldn't find a `::Demo::Hello' object");
 			return 1;
 		}
 
@@ -81,7 +91,7 @@ public class Client extends Ice.Application {
 
 	public static void main(String[] args) {
 		Client app = new Client();
-		int status = app.main("Client", args);
+		int status = app.main("Client", args, "config.client");
 		System.exit(status);
 	}
 }
