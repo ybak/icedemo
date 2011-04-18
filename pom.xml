@@ -57,8 +57,54 @@
               <goal>run</goal>
             </goals>
           </execution>
+          <execution>
+            <id>run_registry</id>
+            <phase>test</phase>
+            <goals>
+              <goal>run</goal>
+            </goals>
+            <configuration>
+              <tasks>
+                <mkdir dir="target/db/registry" />
+                <echo message="running icegridnode config.grid" />
+                <exec executable="icegridnode">
+                  <arg value="--Ice.Config=./src/main/resources/config.grid" />
+                </exec>
+              </tasks>
+            </configuration>
+          </execution>
         </executions>
       </plugin>
     </plugins>
   </build>
+  <profiles>
+    <profile>
+      <id>node1</id>
+      <build>
+        <plugins>
+          <plugin>
+            <artifactId>maven-antrun-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>run_node1</id>
+                <phase>test</phase>
+                <goals>
+                  <goal>run</goal>
+                </goals>
+                <configuration>
+                  <tasks>
+                    <mkdir dir="target/db/registry" />
+                    <echo message="running icegridnode config.grid" />
+                    <exec executable="icegridnode">
+                      <arg value="--Ice.Config=./src/main/resources/config.grid" />
+                    </exec>
+                  </tasks>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
 </project>
