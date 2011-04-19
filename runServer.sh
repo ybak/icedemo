@@ -1,2 +1,2 @@
-cd target\classes
-cmd /k java com.buy360.isaac.icedemo.Server %1=%2
+cd target/classes
+java com.buy360.isaac.icedemo.Server $1=$2

@@ -15,7 +15,7 @@ IceGrid.Registry.SSLPermissionsVerifier=DemoIceGrid/NullSSLPermissionsVerifier
 IceGrid.Registry.AdminSSLPermissionsVerifier=DemoIceGrid/NullSSLPermissionsVerifier
 
 # IceGrid node configuration.
-IceGrid.Node.Name=node1
+IceGrid.Node.Name=node2
 IceGrid.Node.Endpoints=default
 IceGrid.Node.Data=target/db/node
 IceGrid.Node.CollocateRegistry=1

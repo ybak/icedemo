@@ -1,0 +1,19 @@
+<!-- ********************************************************************** Copyright (c) 2003-2010 ZeroC, Inc. All rights 
+  reserved. This copy of Ice is licensed to you under the terms described in the ICE_LICENSE file included in this distribution. 
+  ********************************************************************** -->
+
+<icegrid>
+
+  <application name="Simple">
+
+    <node name="node2">
+      <server id="SimpleServer" exe="runServer.sh" activation="on-demand">
+        <adapter name="Hello" endpoints="tcp">
+          <object identity="Hello" type="::Demo::Hello" property="Identity" />
+        </adapter>
+      </server>
+    </node>
+
+  </application>
+
+</icegrid>
