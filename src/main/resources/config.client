@@ -1,4 +1,4 @@
 #
 # The IceGrid locator proxy.
 #
-Ice.Default.Locator=DemoIceGrid/Locator:default -p 4061 -h 192.168.37.1
+Ice.Default.Router=DemoGlacier2/router:tcp -p 4064 -h 127.0.0.1

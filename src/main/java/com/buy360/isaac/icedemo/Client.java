@@ -2,8 +2,9 @@ package com.buy360.isaac.icedemo;
 
 import Demo.HelloPrx;
 import Demo.HelloPrxHelper;
+import Glacier2.SessionPrx;
 
-public class Client extends Ice.Application {
+public class Client extends Glacier2.Application {
 	class ShutdownHook extends Thread {
 		public void run() {
 			try {
@@ -19,7 +20,14 @@ public class Client extends Ice.Application {
 				+ "s: shutdown server\n" + "x: exit\n" + "?: help\n");
 	}
 
-	public int run(String[] args) {
+	public static void main(String[] args) {
+		Client app = new Client();
+		int status = app.main("Client", args, "config.client");
+		System.exit(status);
+	}
+
+	@Override
+	public int runWithSession(String[] args) throws RestartSessionException {
 		if (args.length > 0) {
 			System.err.println(appName() + ": too many arguments");
 			return 1;
@@ -41,7 +49,7 @@ public class Client extends Ice.Application {
 		try {
 			hello = HelloPrxHelper.checkedCast(communicator().stringToProxy(
 					"hello"));
-		} catch (Ice.NotRegisteredException ex) {
+		} catch (Exception ex) {
 			IceGrid.QueryPrx query = IceGrid.QueryPrxHelper
 					.checkedCast(communicator().stringToProxy(
 							"DemoIceGrid/Query"));
@@ -89,9 +97,12 @@ public class Client extends Ice.Application {
 		return 0;
 	}
 
-	public static void main(String[] args) {
-		Client app = new Client();
-		int status = app.main("Client", args, "config.client");
-		System.exit(status);
+	@Override
+	public SessionPrx createSession() {
+		try {
+			return router().createSession("test", "password");
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
 	}
 }
