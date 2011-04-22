@@ -4,12 +4,12 @@
 
 <icegrid>
 
-  <application name="Simple">
+  <application name="Simple2">
 
     <node name="node2">
-      <server id="SimpleServer" exe="runServer.sh" activation="on-demand">
+      <server id="SimpleServer2" exe="runServer.sh" activation="on-demand">
         <adapter name="Hello" endpoints="tcp">
-          <object identity="Hello" type="::Demo::Hello" property="Identity" />
+          <object identity="Hello2" type="::Demo::Hello" property="Identity" />
         </adapter>
       </server>
     </node>
