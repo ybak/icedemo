@@ -38,7 +38,7 @@ public class Client extends Ice.Application {
 
 	private HelloPrx getHelloProxy() {
 		HelloPrx hello = HelloPrxHelper.checkedCast(communicator()
-				.stringToProxy("Hello:default -p 10000 -h 192.168.37.128"));
+				.stringToProxy("Hello:default -p 10044"));
 		return hello;
 	}
 

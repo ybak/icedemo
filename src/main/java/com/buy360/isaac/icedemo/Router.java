@@ -4,32 +4,51 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.net.SocketAddress;
 
 public class Router {
-	private static final int BUFSIZE = 10000;
 
 	public static void main(String[] args) throws Exception {
 		ServerSocket servSock = new ServerSocket(10044);
 
-		int recvMsgSize;
-		byte[] receiveBuf = new byte[BUFSIZE];
+		Socket clntSock = servSock.accept();
+		InputStream cin = clntSock.getInputStream();
+		OutputStream cout = clntSock.getOutputStream();
 
-		while (true) {
-			Socket clntSock = servSock.accept();
-			SocketAddress clientAddress = clntSock.getRemoteSocketAddress();
-			System.out.println("Handling client at " + clientAddress);
+		Socket srvSocket = new Socket("192.168.37.128", 10000);
+		InputStream sin = srvSocket.getInputStream();
+		OutputStream sout = srvSocket.getOutputStream();
 
-			InputStream in = clntSock.getInputStream();
-			OutputStream out = clntSock.getOutputStream();
+		// Server-->Client connection validation
+		byte[] buf = new byte[14];
+		sin.read(buf);
+		cout.write(buf);
 
-			System.out.println(in.read());
-			while ((recvMsgSize = in.read(receiveBuf)) != -1) {
-				out.write(receiveBuf, 0, recvMsgSize);
-			}
+		// Client-->Server ice_isA()
+		buf = new byte[56];
+		cin.read(buf);
+		sout.write(buf);
 
-			System.out.println("recvMsgSize is " + recvMsgSize);
-			clntSock.close();
-		}
+		// Server-->Client Success
+		buf = new byte[26];
+		sin.read(buf);
+		cout.write(buf);
+		
+		// Client-->Server Hello.SayHello
+		buf = new byte[48];
+		cin.read(buf);
+		sout.write(buf);
+		
+		// Server-->Client Success
+		buf = new byte[42];
+		sin.read(buf);
+		cout.write(buf);
+		
+		// Client-->Server Close connection
+		buf = new byte[14];
+		cin.read(buf);
+		sout.write(buf);
+
+		clntSock.close();
+		srvSocket.close();
 	}
 }
