@@ -14,7 +14,7 @@ public class Server extends Ice.Application {
 		Ice.Properties properties = communicator().getProperties();
 		Ice.Identity id = communicator().stringToIdentity(
 				properties.getProperty("Identity"));
-		adapter.add(new HelloI(properties.getProperty("Ice.ProgramName")), id);
+		adapter.add(new HelloI(), id);
 		adapter.activate();
 		communicator().waitForShutdown();
 		return 0;

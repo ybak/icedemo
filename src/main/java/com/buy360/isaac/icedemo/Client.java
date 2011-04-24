@@ -1,5 +1,7 @@
 package com.buy360.isaac.icedemo;
 
+import java.util.Scanner;
+
 import Demo.HelloPrx;
 import Demo.HelloPrxHelper;
 import Glacier2.SessionPrx;
@@ -15,11 +17,6 @@ public class Client extends Glacier2.Application {
 		}
 	}
 
-	private void menu() {
-		System.out.println("usage:\n" + "t: send greeting\n"
-				+ "s: shutdown server\n" + "x: exit\n" + "?: help\n");
-	}
-
 	public static void main(String[] args) {
 		Client app = new Client();
 		int status = app.main("Client", args, "config.client");
@@ -28,23 +25,26 @@ public class Client extends Glacier2.Application {
 
 	@Override
 	public int runWithSession(String[] args) throws RestartSessionException {
-		if (args.length > 0) {
-			System.err.println(appName() + ": too many arguments");
-			return 1;
-		}
-
-		//
-		// Since this is an interactive demo we want to clear the
-		// Application installed interrupt callback and install our
-		// own shutdown hook.
-		//
 		setInterruptHook(new ShutdownHook());
 
-		//
-		// First we try to connect to the object with the `hello'
-		// identity. If it's not registered with the registry, we
-		// search for an object with the ::Demo::Hello type.
-		//
+		HelloPrx hello = getHelloProxy();
+		System.out.println("what's your name?");
+		String user = new Scanner(System.in).nextLine();
+		System.out.println(hello.sayHello(user));
+
+		return 0;
+	}
+
+	@Override
+	public SessionPrx createSession() {
+		try {
+			return router().createSession("test", "password");
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	private HelloPrx getHelloProxy() {
 		HelloPrx hello = null;
 		try {
 			hello = HelloPrxHelper.checkedCast(communicator().stringToProxy(
@@ -57,52 +57,8 @@ public class Client extends Glacier2.Application {
 					.findObjectByType("::Demo::Hello"));
 		}
 		if (hello == null) {
-			System.err.println("couldn't find a `::Demo::Hello' object");
-			return 1;
+			throw new RuntimeException("couldn't find a '::Demo::Hello' object");
 		}
-
-		menu();
-
-		java.io.BufferedReader in = new java.io.BufferedReader(
-				new java.io.InputStreamReader(System.in));
-
-		String line = null;
-		do {
-			try {
-				System.out.print("==> ");
-				System.out.flush();
-				line = in.readLine();
-				if (line == null) {
-					break;
-				}
-				if (line.equals("t")) {
-					hello.sayHello();
-				} else if (line.equals("s")) {
-					hello.shutdown();
-				} else if (line.equals("x")) {
-					// Nothing to do
-				} else if (line.equals("?")) {
-					menu();
-				} else {
-					System.out.println("unknown command `" + line + "'");
-					menu();
-				}
-			} catch (java.io.IOException ex) {
-				ex.printStackTrace();
-			} catch (Ice.LocalException ex) {
-				ex.printStackTrace();
-			}
-		} while (!line.equals("x"));
-
-		return 0;
-	}
-
-	@Override
-	public SessionPrx createSession() {
-		try {
-			return router().createSession("test", "password");
-		} catch (Exception e) {
-			throw new RuntimeException(e);
-		}
+		return hello;
 	}
 }

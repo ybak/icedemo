@@ -1,4 +1,5 @@
 package com.buy360.isaac.icedemo;
+
 // **********************************************************************
 //
 // Copyright (c) 2003-2010 ZeroC, Inc. All rights reserved.
@@ -8,27 +9,20 @@ package com.buy360.isaac.icedemo;
 //
 // **********************************************************************
 
-import Demo.*;
+import Demo._HelloDisp;
+import Ice.Current;
 
-public class HelloI extends _HelloDisp
-{
-    public HelloI(String name)
-    {
-        _name = name;
-    }
+public class HelloI extends _HelloDisp {
+	private String name = "###$%%#";
 
-    public void
-    sayHello(Ice.Current current)
-    {
-        System.out.println(_name + " says Hello World!");
-    }
+	public void shutdown(Ice.Current current) {
+		System.out.println(name + " shutting down...");
+		current.adapter.getCommunicator().shutdown();
+	}
 
-    public void
-    shutdown(Ice.Current current)
-    {
-        System.out.println(_name + " shutting down...");
-        current.adapter.getCommunicator().shutdown();
-    }
-
-    private final String _name;
+	@Override
+	public String sayHello(String user, Current __current) {
+		System.out.println(user + " says Hello!");
+		return "hello " + user;
+	}
 }
