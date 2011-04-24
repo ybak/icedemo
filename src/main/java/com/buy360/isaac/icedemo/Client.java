@@ -1,5 +1,7 @@
 package com.buy360.isaac.icedemo;
 
+import java.util.Scanner;
+
 import Demo.*;
 
 public class Client extends Ice.Application {
@@ -24,59 +26,20 @@ public class Client extends Ice.Application {
 			return 1;
 		}
 
-		//
-		// Since this is an interactive demo we want to clear the
-		// Application installed interrupt callback and install our
-		// own shutdown hook.
-		//
 		setInterruptHook(new ShutdownHook());
 
-		//
-		// First we try to connect to the object with the `hello'
-		// identity. If it's not registered with the registry, we
-		// search for an object with the ::Demo::Hello type.
-		//
-		HelloPrx hello = HelloPrxHelper.checkedCast(communicator()
-				.stringToProxy("Hello:default -p 10000"));
-		if (hello == null) {
-			System.err.println("couldn't find a '::Demo::Hello' object");
-			return 1;
-		}
-
-		menu();
-
-		java.io.BufferedReader in = new java.io.BufferedReader(
-				new java.io.InputStreamReader(System.in));
-
-		String line = null;
-		do {
-			try {
-				System.out.print("==> ");
-				System.out.flush();
-				line = in.readLine();
-				if (line == null) {
-					break;
-				}
-				if (line.equals("t")) {
-					hello.sayHello();
-				} else if (line.equals("s")) {
-					hello.shutdown();
-				} else if (line.equals("x")) {
-					// Nothing to do
-				} else if (line.equals("?")) {
-					menu();
-				} else {
-					System.out.println("unknown command `" + line + "'");
-					menu();
-				}
-			} catch (java.io.IOException ex) {
-				ex.printStackTrace();
-			} catch (Ice.LocalException ex) {
-				ex.printStackTrace();
-			}
-		} while (!line.equals("x"));
+		HelloPrx hello = getHelloProxy();
+		System.out.println("what's your name?");
+		String user = new Scanner(System.in).nextLine();
+		System.out.println(hello.sayHello(user));
 
 		return 0;
+	}
+
+	private HelloPrx getHelloProxy() {
+		HelloPrx hello = HelloPrxHelper.checkedCast(communicator()
+				.stringToProxy("Hello:default -p 10000"));
+		return hello;
 	}
 
 	public static void main(String[] args) {

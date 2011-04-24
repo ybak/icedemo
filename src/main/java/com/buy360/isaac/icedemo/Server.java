@@ -10,9 +10,8 @@ public class Server extends Ice.Application {
 		}
 
 		Ice.ObjectAdapter adapter = communicator()
-				.createObjectAdapterWithEndpoints("Hello",
-						"default -p 10000");
-		adapter.add(new HelloI("Hello"), new Identity("Hello", null));
+				.createObjectAdapterWithEndpoints("Hello", "default -p 10000");
+		adapter.add(new HelloI(), new Identity("Hello", null));
 		adapter.activate();
 		communicator().waitForShutdown();
 		return 0;
