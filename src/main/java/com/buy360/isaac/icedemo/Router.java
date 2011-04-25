@@ -14,47 +14,51 @@ import java.util.concurrent.Executors;
 
 public class Router implements Runnable {
 
+	private static final int ICEP_TYPE_REQUEST = 0;
+	private static final int ICEP_TYPE_CLOSE_CONNECTION = 4;
 	private static final int ICEP_MESSAGE_TYPE = 8;
 	private static final int ICEP_HEADER_LENGTH = 14;
 	private static final int ICEP_SIZE_LENGTH = 4;
 	private static final int ICEP_HEADER_BEFORE_SIZE_LENGTH = ICEP_HEADER_LENGTH
 			- ICEP_SIZE_LENGTH;
 
-	public Router(Socket clntSock) {
-		this.routerClientSock = clntSock;
-	}
+	private Socket clientRouterSocket;
+	private Socket routerServerSocket;
 
-	private Socket routerClientSock;
+	public Router(Socket socket) throws Exception {
+		clientRouterSocket = socket;
+		routerServerSocket = new Socket("127.0.0.1", 10000);
+	}
 
 	@Override
 	public void run() {
 		try {
 			DataInputStream cin = new DataInputStream(new BufferedInputStream(
-					routerClientSock.getInputStream()));
+					clientRouterSocket.getInputStream()));
 			DataOutputStream cout = new DataOutputStream(
-					new BufferedOutputStream(routerClientSock.getOutputStream()));
+					new BufferedOutputStream(
+							clientRouterSocket.getOutputStream()));
 
-			Socket routerServerSocket = new Socket("127.0.0.1", 10000);
 			DataInputStream sin = new DataInputStream(new BufferedInputStream(
 					routerServerSocket.getInputStream()));
 			DataOutputStream sout = new DataOutputStream(
 					new BufferedOutputStream(
 							routerServerSocket.getOutputStream()));
-			byte messageType = 0;
-			while (messageType != 4) {
+			byte messageType = ICEP_TYPE_REQUEST;
+			while (messageType != ICEP_TYPE_CLOSE_CONNECTION) {
 				// Server-->Client
-				forward(sin, cout);
+				forwardBytes(sin, cout);
 				// Client-->Server
-				messageType = forward(cin, sout);
+				messageType = forwardBytes(cin, sout);
 			}
-			routerClientSock.close();
+			clientRouterSocket.close();
+			routerServerSocket.close();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-
 	}
 
-	private byte forward(DataInputStream sin, DataOutputStream cout)
+	private byte forwardBytes(DataInputStream sin, DataOutputStream cout)
 			throws IOException {
 		byte[] icepHeaderBuf = new byte[ICEP_HEADER_BEFORE_SIZE_LENGTH];
 		sin.readFully(icepHeaderBuf);
@@ -76,11 +80,10 @@ public class Router implements Runnable {
 	}
 
 	public static void main(String[] args) throws Exception {
-		ServerSocket serverListenSock = new ServerSocket(10044);
+		ServerSocket serverSock = new ServerSocket(10044);
 		ExecutorService threadPool = Executors.newCachedThreadPool();
 		while (true) {
-			Socket socket = serverListenSock.accept();
-			threadPool.execute(new Router(socket));
+			threadPool.execute(new Router(serverSock.accept()));
 		}
 	}
 }

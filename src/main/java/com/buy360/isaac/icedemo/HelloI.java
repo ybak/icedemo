@@ -24,7 +24,7 @@ public class HelloI extends _HelloDisp {
 
 	@Override
 	public String sayHello(String user, Current __current) {
-		String greeting = user + " says Hello!";
+		String greeting = "Hello " + user;
 		System.out.println(greeting);
 		return greeting;
 	}
