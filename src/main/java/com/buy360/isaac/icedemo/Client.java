@@ -2,7 +2,8 @@ package com.buy360.isaac.icedemo;
 
 import java.util.Scanner;
 
-import Demo.*;
+import Demo.HelloPrx;
+import Demo.HelloPrxHelper;
 
 public class Client extends Ice.Application {
 	class ShutdownHook extends Thread {
@@ -13,11 +14,6 @@ public class Client extends Ice.Application {
 				ex.printStackTrace();
 			}
 		}
-	}
-
-	private void menu() {
-		System.out.println("usage:\n" + "t: send greeting\n"
-				+ "s: shutdown server\n" + "x: exit\n" + "?: help\n");
 	}
 
 	public int run(String[] args) {
