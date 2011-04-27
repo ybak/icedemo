@@ -13,11 +13,17 @@
 module Demo
 {
 
-interface Hello
-{
-    idempotent string sayHello(string user);
-    void shutdown();
-};
+	interface Hello
+	{
+	    idempotent string sayHello(string user);
+	    void shutdown();
+	};
+	
+	interface Echo
+	{
+	    idempotent string doEcho(string text);
+	    void shutdown();
+	};
 
 };
 

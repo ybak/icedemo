@@ -7,14 +7,15 @@ public class EchoI extends _EchoDisp {
 
 	@Override
 	public void shutdown(Current __current) {
-		// TODO Auto-generated method stub
-
+		System.out.println(" shutting down...");
+		__current.adapter.getCommunicator().shutdown();
 	}
 
 	@Override
 	public String doEcho(String text, Current __current) {
-		// TODO Auto-generated method stub
-		return null;
+		String ehcoText = "Server echo: " + text;
+		System.out.println(ehcoText);
+		return ehcoText;
 	}
 
 }

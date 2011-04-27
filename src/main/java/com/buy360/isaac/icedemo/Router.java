@@ -44,6 +44,7 @@ public class Router implements Runnable {
 			DataOutputStream sout = new DataOutputStream(
 					new BufferedOutputStream(
 							routerServerSocket.getOutputStream()));
+			
 			byte messageType = ICEP_TYPE_REQUEST;
 			while (messageType != ICEP_TYPE_CLOSE_CONNECTION) {
 				// Server-->Client
