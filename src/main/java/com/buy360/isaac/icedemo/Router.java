@@ -3,12 +3,14 @@ package com.buy360.isaac.icedemo;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
-import java.nio.channels.ClosedChannelException;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 
 public class Router {
 
@@ -23,119 +25,117 @@ public class Router {
     private static final int TIMEOUT = 3000;
     private static final int ROUTER_PORT = 10004;
     private static final int SERVER_PORT = 10000;
+    private static final InetSocketAddress ROUTER_ENDPOINT = new InetSocketAddress(ROUTER_PORT);
+    private static final InetSocketAddress SERVER_ENDPOINT = new InetSocketAddress(SERVER_PORT);
 
-    private ByteBuffer buf = ByteBuffer.allocateDirect(1024);
-    private Selector clientSelector;
-    private Selector serverSelector;
+    private Map<SocketChannel, SocketChannel> channelMapper = new HashMap<SocketChannel, SocketChannel>();
+    private Selector selector;
 
-    public static void main(String[] args) throws Exception {
-        Router router = new Router();
-        router.run();
-    }
+    private void run() {
+        ServerSocketChannel clientAcceptListenChannel = null;
+        try {
+            clientAcceptListenChannel = ServerSocketChannel.open();
+            ByteBuffer buf = ByteBuffer.allocateDirect(1024);
+            clientAcceptListenChannel.configureBlocking(false);
+            clientAcceptListenChannel.socket().bind(ROUTER_ENDPOINT);
 
-    private void run() throws IOException, ClosedChannelException {
-        clientSelector = openClientSelector();
-        serverSelector = openServerSelector();
+            while (true) {
+                SocketChannel clientRouterChannel = clientAcceptListenChannel.accept();
+                if (clientRouterChannel != null) {
+                    clientRouterChannel.configureBlocking(false);
+                    SocketChannel serverRouterChannel = SocketChannel.open();
+                    serverRouterChannel.configureBlocking(false);
+                    channelMapper.put(clientRouterChannel, serverRouterChannel);
+                    channelMapper.put(serverRouterChannel, clientRouterChannel);
 
-        while (true) {
-            if (clientSelector.select(TIMEOUT) == 0 && serverSelector.select(TIMEOUT) == 0) {
-                System.out.print(".");
-                continue;
-            }
+                    serverRouterChannel.connect(SERVER_ENDPOINT);
+                    serverRouterChannel.finishConnect();
 
-            Iterator<SelectionKey> serverSelectorKeyIterator = serverSelector.selectedKeys().iterator();
-            Iterator<SelectionKey> clientSelectorkeyIterator = clientSelector.selectedKeys().iterator();
-
-            while (clientSelectorkeyIterator.hasNext() && serverSelectorKeyIterator.hasNext()) {
-                SelectionKey clientKey = clientSelectorkeyIterator.next();
-                SelectionKey serverKey = serverSelectorKeyIterator.next();
-
-                if (clientKey.isAcceptable() && serverKey.isReadable()) {
-                    handleClientConnection(clientKey, serverKey);
-                    clientSelectorkeyIterator.remove();
-                    serverSelectorKeyIterator.remove();
-                }
-                
-                if (clientKey.isWritable() && serverKey.isReadable()) {
-                    handleServerRequest(clientKey, serverKey);
-                    clientSelectorkeyIterator.remove();
-                    serverSelectorKeyIterator.remove();
-                }
-
-                if (clientKey.isReadable() && serverKey.isWritable()) {
-                    byte returnType = handleClientRequset(clientKey, serverKey);
-                    clientSelectorkeyIterator.remove();
-                    serverSelectorKeyIterator.remove();
-                    if (ICEP_TYPE_CLOSE_CONNECTION == returnType) {
-                        clientKey.channel().close();
-//                        serverKey.channel().close();
+                    clientRouterChannel.register(selector, clientRouterChannel.validOps());
+                    serverRouterChannel.register(selector, serverRouterChannel.validOps());
+                } else {
+                    Iterator<SelectionKey> iterator = selector.selectedKeys().iterator();
+                    boolean hasWrite = false;
+                    while (iterator.hasNext()) {
+                        SocketChannel readChannel = null;
+                        SelectionKey selectionKey = iterator.next();
+                        iterator.remove();
+                        try {
+                            if (selectionKey.isValid() && selectionKey.isReadable()) {
+                                readChannel = (SocketChannel) selectionKey.channel();
+                                SocketChannel writeChannel = channelMapper.get(readChannel);
+                                if (readChannel.finishConnect() && writeChannel.finishConnect()
+                                        && readChannel.isConnected() && writeChannel.isConnected()) {
+                                    hasWrite = true;
+                                    buf.clear();
+                                    int numBytesRead = readChannel.read(buf);
+                                    if (numBytesRead == -1) {
+                                        close(readChannel);
+                                        selectionKey.cancel();
+                                    } else {
+                                        writeBuffer(buf, numBytesRead, writeChannel);
+                                    }
+                                }
+                            }
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                            close(readChannel);
+                            selectionKey.cancel();
+                        }
+                    }
+                    if (!hasWrite) {
+                        Thread.sleep(10);
                     }
                 }
-
-
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if (selector != null) {
+                try {
+                    selector.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+            try {
+                for (SocketChannel one : new ArrayList<SocketChannel>(channelMapper.keySet())) {
+                    close(one);
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            if (clientAcceptListenChannel != null) {
+                try {
+                    clientAcceptListenChannel.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
         }
     }
 
-    private Selector openServerSelector() throws IOException, ClosedChannelException {
-        Selector serverSelector = Selector.open();
-        SocketChannel serverRouterChan = SocketChannel.open();
-        if (!serverRouterChan.connect(new InetSocketAddress(SERVER_PORT))) {
-            while (!serverRouterChan.finishConnect()) {
-                System.out.print(".");
-            }
-        }
-        serverRouterChan.configureBlocking(false);
-        serverRouterChan.register(serverSelector, SelectionKey.OP_READ);
-        return serverSelector;
-    }
-
-    private Selector openClientSelector() throws IOException, ClosedChannelException {
-        Selector clientSelector = Selector.open();
-        ServerSocketChannel clientRouterListenChannel = ServerSocketChannel.open();
-        clientRouterListenChannel.socket().bind(new InetSocketAddress(ROUTER_PORT));
-        clientRouterListenChannel.configureBlocking(false);
-        clientRouterListenChannel.register(clientSelector, SelectionKey.OP_ACCEPT);
-        return clientSelector;
-    }
-
-    private void handleClientConnection(SelectionKey clientKey, SelectionKey serverKey) throws IOException {
-        SocketChannel serverRouterChan = (SocketChannel) serverKey.channel();
-        buf.clear();
-        int bytesRead = serverRouterChan.read(buf);
-        SocketChannel clientRouterChannel = ((ServerSocketChannel) clientKey.channel()).accept();
-        writeBuffer(bytesRead, clientRouterChannel);
-        clientRouterChannel.configureBlocking(false);
-        clientRouterChannel.register(clientKey.selector(), SelectionKey.OP_READ);
-        serverKey.interestOps(SelectionKey.OP_WRITE);
-    }
-
-    private byte handleClientRequset(SelectionKey clientKey, SelectionKey serverKey) throws IOException {
-        SocketChannel clientChan = (SocketChannel) clientKey.channel();
-        buf.clear();
-        int bytesRead = clientChan.read(buf);
-        SocketChannel serverRouterChannel = (SocketChannel) serverKey.channel();
-        writeBuffer(bytesRead, serverRouterChannel);
-        clientKey.interestOps(SelectionKey.OP_WRITE);
-        serverKey.interestOps(SelectionKey.OP_READ);
-        return buf.get(ICEP_MESSAGE_TYPE);
-    }
-
-    private void handleServerRequest(SelectionKey clientKey, SelectionKey serverKey) throws IOException {
-        SocketChannel serverRouterChan = (SocketChannel) serverKey.channel();
-        buf.clear();
-        int bytesRead = serverRouterChan.read(buf);
-        SocketChannel clientChannel = (SocketChannel) clientKey.channel();
-        writeBuffer(bytesRead, clientChannel);
-        serverKey.interestOps(SelectionKey.OP_WRITE);
-        clientKey.interestOps(SelectionKey.OP_READ);
-    }
-
-    private void writeBuffer(int bytesRead, SocketChannel channel) throws IOException {
+    private void writeBuffer(ByteBuffer buf, int bytesRead, SocketChannel channel) throws IOException {
         buf.flip();
         int have = 0;
         while (have < bytesRead) {
             have += channel.write(buf);
         }
+    }
+
+    private void close(SocketChannel readChannel) throws IOException {
+        if (readChannel != null) {
+            SocketChannel writeChannel = channelMapper.get(readChannel);
+            channelMapper.remove(readChannel);
+            readChannel.close();
+            if (writeChannel != null) {
+                writeChannel.close();
+            }
+        }
+    }
+
+    public static void main(String[] args) {
+        Router router = new Router();
+        router.run();
     }
 }
