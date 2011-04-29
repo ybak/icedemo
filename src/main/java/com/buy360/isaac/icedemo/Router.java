@@ -1,7 +1,8 @@
 package com.buy360.isaac.icedemo;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
-import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
@@ -12,21 +13,12 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
+import IceUtilInternal.Base64;
+
 public class Router {
 
-    private static final int ICEP_TYPE_REQUEST = 0;
-    private static final int ICEP_TYPE_CLOSE_CONNECTION = 4;
-    private static final int ICEP_MESSAGE_TYPE = 8;
-    private static final int ICEP_HEADER_LENGTH = 14;
-    private static final int ICEP_SIZE_LENGTH = 4;
-    private static final int ICEP_HEADER_BEFORE_SIZE_LENGTH = ICEP_HEADER_LENGTH - ICEP_SIZE_LENGTH;
-
-    private static final int ROUTER_PORT = 10004;
-    private static final int SERVER_PORT = 10000;
-    private static final InetSocketAddress ROUTER_ENDPOINT = new InetSocketAddress(ROUTER_PORT);
-    private static final InetSocketAddress SERVER_ENDPOINT = new InetSocketAddress(SERVER_PORT);
-
     private Map<SocketChannel, SocketChannel> channelMapper = new HashMap<SocketChannel, SocketChannel>();
+    private FileOutputStream fileOutputStream;
 
     private void run() {
         Selector selector = null;
@@ -36,7 +28,11 @@ public class Router {
             clientAcceptListenChannel = ServerSocketChannel.open();
             ByteBuffer buf = ByteBuffer.allocateDirect(1024);
             clientAcceptListenChannel.configureBlocking(false);
-            clientAcceptListenChannel.socket().bind(ROUTER_ENDPOINT);
+            clientAcceptListenChannel.socket().bind(Config.ROUTER_ENDPOINT);
+
+            if (Config.IS_DATA_RECORD) {
+                fileOutputStream = new FileOutputStream(new File("IceData.data"));
+            }
 
             while (true) {
                 SocketChannel clientRouterChannel = clientAcceptListenChannel.accept();
@@ -47,12 +43,10 @@ public class Router {
                     channelMapper.put(clientRouterChannel, serverRouterChannel);
                     channelMapper.put(serverRouterChannel, clientRouterChannel);
 
-                    serverRouterChannel.connect(SERVER_ENDPOINT);
+                    serverRouterChannel.connect(Config.SERVER_ENDPOINT);
                     serverRouterChannel.finishConnect();
-
                     serverRouterChannel.register(selector, serverRouterChannel.validOps());
                     clientRouterChannel.register(selector, clientRouterChannel.validOps());
-
                 } else if (selector.select(50) > 0) {
                     Iterator<SelectionKey> iterator = selector.selectedKeys().iterator();
                     boolean hasWrite = false;
@@ -99,6 +93,10 @@ public class Router {
                 }
             }
             try {
+                if (Config.IS_DATA_RECORD) {
+                    fileOutputStream.flush();
+                    fileOutputStream.close();
+                }
                 for (SocketChannel one : new ArrayList<SocketChannel>(channelMapper.keySet())) {
                     close(one);
                 }
@@ -121,6 +119,18 @@ public class Router {
         while (have < bytesRead) {
             have += channel.write(buf);
         }
+        if (Config.IS_DATA_RECORD) {
+            writeBuf2File(buf, bytesRead);
+        }
+    }
+
+    private void writeBuf2File(ByteBuffer buf, int bytesRead) throws IOException {
+        buf.rewind();
+        byte[] bytes = new byte[bytesRead];
+        buf.get(bytes);
+        fileOutputStream.write(Base64.encode(bytes).getBytes());
+        fileOutputStream.write("\n".getBytes());
+        fileOutputStream.flush();
     }
 
     private void close(SocketChannel readChannel) throws IOException {
