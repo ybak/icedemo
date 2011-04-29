@@ -14,7 +14,6 @@ import java.util.Map;
 
 public class Router {
 
-    private static final int RouterPort = 10000;
     private static final int ICEP_TYPE_REQUEST = 0;
     private static final int ICEP_TYPE_CLOSE_CONNECTION = 4;
     private static final int ICEP_MESSAGE_TYPE = 8;
@@ -22,18 +21,18 @@ public class Router {
     private static final int ICEP_SIZE_LENGTH = 4;
     private static final int ICEP_HEADER_BEFORE_SIZE_LENGTH = ICEP_HEADER_LENGTH - ICEP_SIZE_LENGTH;
 
-    private static final int TIMEOUT = 3000;
     private static final int ROUTER_PORT = 10004;
     private static final int SERVER_PORT = 10000;
     private static final InetSocketAddress ROUTER_ENDPOINT = new InetSocketAddress(ROUTER_PORT);
     private static final InetSocketAddress SERVER_ENDPOINT = new InetSocketAddress(SERVER_PORT);
 
     private Map<SocketChannel, SocketChannel> channelMapper = new HashMap<SocketChannel, SocketChannel>();
-    private Selector selector;
 
     private void run() {
+        Selector selector = null;
         ServerSocketChannel clientAcceptListenChannel = null;
         try {
+            selector = Selector.open();
             clientAcceptListenChannel = ServerSocketChannel.open();
             ByteBuffer buf = ByteBuffer.allocateDirect(1024);
             clientAcceptListenChannel.configureBlocking(false);
@@ -51,9 +50,10 @@ public class Router {
                     serverRouterChannel.connect(SERVER_ENDPOINT);
                     serverRouterChannel.finishConnect();
 
-                    clientRouterChannel.register(selector, clientRouterChannel.validOps());
                     serverRouterChannel.register(selector, serverRouterChannel.validOps());
-                } else {
+                    clientRouterChannel.register(selector, clientRouterChannel.validOps());
+
+                } else if (selector.select(50) > 0) {
                     Iterator<SelectionKey> iterator = selector.selectedKeys().iterator();
                     boolean hasWrite = false;
                     while (iterator.hasNext()) {
@@ -129,6 +129,7 @@ public class Router {
             channelMapper.remove(readChannel);
             readChannel.close();
             if (writeChannel != null) {
+                channelMapper.remove(writeChannel);
                 writeChannel.close();
             }
         }
