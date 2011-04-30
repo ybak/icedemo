@@ -1,5 +1,6 @@
 package com.buy360.isaac.icedemo;
 
+import java.util.Scanner;
 import java.util.concurrent.TimeUnit;
 
 import Demo.HelloPrx;
@@ -26,11 +27,11 @@ public class Client extends Ice.Application {
 
         HelloPrx hello = getHelloProxy();
         System.out.println("what's your name?");
-        String user = "jackson";
-        try {
-            TimeUnit.SECONDS.sleep(2);
-        } catch (InterruptedException e) {
-        }
+        String user = new Scanner(System.in).nextLine();
+//        try {
+//            TimeUnit.SECONDS.sleep(2);
+//        } catch (InterruptedException e) {
+//        }
         System.out.println(hello.sayHello(user));
 
         return 0;
