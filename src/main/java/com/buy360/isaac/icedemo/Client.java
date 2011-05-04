@@ -1,7 +1,6 @@
 package com.buy360.isaac.icedemo;
 
 import java.util.Scanner;
-import java.util.concurrent.TimeUnit;
 
 import Demo.HelloPrx;
 import Demo.HelloPrxHelper;
@@ -25,22 +24,12 @@ public class Client extends Ice.Application {
 
         setInterruptHook(new ShutdownHook());
 
-        HelloPrx hello = getHelloProxy();
-        System.out.println("what's your name?");
-        String user = new Scanner(System.in).nextLine();
-//        try {
-//            TimeUnit.SECONDS.sleep(2);
-//        } catch (InterruptedException e) {
-//        }
-        System.out.println(hello.sayHello(user));
-
-        return 0;
-    }
-
-    private HelloPrx getHelloProxy() {
         HelloPrx hello = HelloPrxHelper.checkedCast(communicator().stringToProxy(
                 "Hello:default -p " + Config.ROUTER_PORT));
-        return hello;
+        System.out.println("what's your name?");
+        String user = new Scanner(System.in).nextLine();
+        System.out.println(hello.sayHello(user));
+        return 0;
     }
 
     public static void main(String[] args) {

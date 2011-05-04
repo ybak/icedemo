@@ -18,7 +18,7 @@ import org.apache.log4j.Logger;
 import IceUtilInternal.Base64;
 
 public class ClientRunner {
-    Logger logger = Logger.getLogger(ClientRunner.class);
+    private Logger logger = Logger.getLogger(ClientRunner.class);
 
     private static final int NUM_OF_CLIENT = 10000;
     private int numOfAliveClient = NUM_OF_CLIENT;
