@@ -24,16 +24,17 @@ public class ClientRunner {
     private int numOfAliveClient = NUM_OF_CLIENT;
     private Selector selector;
     private ByteBuffer byteBuffer = ByteBuffer.allocate(1024);
+    private byte[][] iceClientRequestData = new byte[3][];
 
     public void run() throws IOException, FileNotFoundException, ClosedChannelException {
         selector = Selector.open();
+        initIceClientRequestData();
 
         for (int i = 0; i < NUM_OF_CLIENT; i++) {
-            BufferedReader bufferedReader = new BufferedReader(new FileReader(new File("IceData.data")));
             SocketChannel channel = SocketChannel.open(Config.SERVER_ENDPOINT);
             channel.finishConnect();
             channel.configureBlocking(false);
-            channel.register(selector, channel.validOps(), bufferedReader);
+            channel.register(selector, channel.validOps(), 0);
             logger.debug(channel.socket().getLocalPort() + " Connected.");
         }
 
@@ -48,6 +49,15 @@ public class ClientRunner {
             if (numOfAliveClient == 0) {
                 break;
             }
+        }
+    }
+
+    private void initIceClientRequestData() throws FileNotFoundException, IOException {
+        BufferedReader bufferedReader = new BufferedReader(new FileReader(new File("IceData.data")));
+        for (int i = 0; i < iceClientRequestData.length; i++) {
+            bufferedReader.readLine();
+            byte[] validateConnBytes = Base64.decode(bufferedReader.readLine());
+            iceClientRequestData[i] = validateConnBytes;
         }
     }
 
@@ -80,10 +90,9 @@ public class ClientRunner {
     private void sendIceSignal(SelectionKey selectionKey, SocketChannel channel) throws IOException {
         logger.debug("forwarding " + channel.socket().getLocalPort());
         byteBuffer.clear();
-        BufferedReader fileReader = (BufferedReader) selectionKey.attachment();
-        fileReader.readLine();
-        byte[] validateConnBytes = Base64.decode(fileReader.readLine());
-        byteBuffer.put(validateConnBytes);
+        Integer currentRequestIndex = (Integer) selectionKey.attachment();
+        byteBuffer.put(iceClientRequestData[currentRequestIndex]);
+        selectionKey.attach(++currentRequestIndex);
         byteBuffer.flip();
         channel.write(byteBuffer);
     }
