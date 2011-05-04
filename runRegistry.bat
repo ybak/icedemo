@@ -5,7 +5,5 @@ start "IceGridNode config.node1" cmd /k icegridnode --Ice.Config=./src/main/reso
 icegridadmin --Ice.Config=src\main\resources\config.grid -e "application remove Simple"
 icegridadmin --Ice.Config=src\main\resources\config.grid -e "application add 'src\main\resources\application.xml'"
 
-start "glacier2router" cmd /k glacier2router --Ice.Config=src/main/resources/config.glacier2
-
 java -jar %ICE_HOME%\bin\IceGridGUI.jar
 
