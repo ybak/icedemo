@@ -12,18 +12,15 @@ import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
 public class NettyRouterServer {
 
     public static void main(String[] args) throws Exception {
-        // Configure the server.
         ServerBootstrap bootstrap = new ServerBootstrap(new NioServerSocketChannelFactory(
                 Executors.newCachedThreadPool(), Executors.newCachedThreadPool()));
 
-        // Set up the pipeline factory.
         bootstrap.setPipelineFactory(new ChannelPipelineFactory() {
             public ChannelPipeline getPipeline() throws Exception {
                 return Channels.pipeline(new NettyRouterHandler());
             }
         });
 
-        // Bind and start to accept incoming connections.
         bootstrap.bind(new InetSocketAddress(Config.ROUTER_PORT));
     }
 }

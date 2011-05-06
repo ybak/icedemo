@@ -9,13 +9,18 @@ import org.jboss.netty.channel.ExceptionEvent;
 import org.jboss.netty.channel.MessageEvent;
 import org.jboss.netty.channel.SimpleChannelUpstreamHandler;
 
+/**
+ * £∫°¥ √ª∏„Õ∑°£
+ * 
+ * @author ybak
+ * 
+ */
 public class NettyRouterHandler extends SimpleChannelUpstreamHandler {
 
     private static final Logger logger = Logger.getLogger(NettyRouterHandler.class.getName());
 
     @Override
     public void messageReceived(ChannelHandlerContext ctx, MessageEvent e) throws Exception {
-        // TODO Auto-generated method stub
         super.messageReceived(ctx, e);
     }
 
@@ -26,7 +31,6 @@ public class NettyRouterHandler extends SimpleChannelUpstreamHandler {
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e) {
-        // Close the connection when an exception is raised.
         logger.log(Level.WARNING, "Unexpected exception from downstream.", e.getCause());
         e.getChannel().close();
     }
