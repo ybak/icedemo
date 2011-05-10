@@ -8,12 +8,18 @@
     <node name="node1">
       <server id="SimpleServer" exe="runServer.bat" activation="on-demand">
         <adapter name="Hello" endpoints="tcp" />
+        <properties>
+          <property name="Identity" value="hello" />
+        </properties>
       </server>
     </node>
 
     <node name="node2">
       <server id="SimpleServer2" exe="runServer.sh" activation="on-demand">
         <adapter name="Hello" endpoints="tcp" />
+        <properties>
+          <property name="Identity" value="hello" />
+        </properties>
       </server>
     </node>
   </application>
