@@ -4,6 +4,7 @@ import java.util.Scanner;
 
 import Demo.HelloPrx;
 import Demo.HelloPrxHelper;
+import Ice.ObjectPrx;
 
 public class Client extends Ice.Application {
     class ShutdownHook extends Thread {
@@ -27,17 +28,22 @@ public class Client extends Ice.Application {
         setInterruptHook(new ShutdownHook());
 
         HelloPrx hello = getHelloProxy();
+        while (true) {
+            sayHello(hello);
+        }
+    }
+
+    private void sayHello(HelloPrx hello) {
         System.out.println("what's your name?");
         String user = new Scanner(System.in).nextLine();
         System.out.println(hello.sayHello(user));
-
-        return 0;
     }
 
     private HelloPrx getHelloProxy() {
         HelloPrx hello = null;
         try {
-            hello = HelloPrxHelper.checkedCast(communicator().stringToProxy("hello"));
+            ObjectPrx stringToProxy = communicator().stringToProxy("hello");
+            hello = HelloPrxHelper.checkedCast(stringToProxy);
         } catch (Exception ex) {
             IceGrid.QueryPrx query = IceGrid.QueryPrxHelper.checkedCast(communicator().stringToProxy(
                     "DemoIceGrid/Query"));
